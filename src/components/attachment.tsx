@@ -22,9 +22,8 @@ import {
 	DialogPortal,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { TooltipIconButton } from '@/components/tooltip-icon-button';
 import { DialogContent as DialogPrimitiveContent } from '@radix-ui/react-dialog';
-import IconButton from '@mui/material/IconButton';
-import { Tooltip as MuiTooltip } from '@mui/material';
 
 const useFileSrc = (file: File | undefined) => {
 	const [src, setSrc] = useState<string | undefined>(undefined);
@@ -100,7 +99,7 @@ const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
 			</DialogTrigger>
 			<AttachmentDialogContent>
 				<DialogTitle className="aui-sr-only">
-					Image Attachment Preview
+					Xem trước đính kèm ảnh
 				</DialogTitle>
 				<AttachmentPreview src={src} />
 			</AttachmentDialogContent>
@@ -139,7 +138,7 @@ const AttachmentUI: FC = () => {
 	});
 	return (
 		<Tooltip>
-			<AttachmentPrimitive.Root className="relative mt-3">
+			<AttachmentPrimitive.Root className="relative mt-4">
 				<AttachmentPreviewDialog>
 					<TooltipTrigger asChild>
 						<div className="flex h-12 w-40 items-center justify-center gap-2 rounded-lg border p-1">
@@ -165,11 +164,13 @@ const AttachmentUI: FC = () => {
 const AttachmentRemove: FC = () => {
 	return (
 		<AttachmentPrimitive.Remove asChild>
-			<MuiTooltip title="Xóa đính kèm" placement="top">
-				<IconButton className="text-muted-foreground [&>svg]:bg-background absolute -right-3 -top-3 size-6 [&>svg]:size-4 [&>svg]:rounded-full">
-					<CircleXIcon />
-				</IconButton>
-			</MuiTooltip>
+			<TooltipIconButton
+				tooltip="Xóa tập tin"
+				className="text-muted-foreground [&>svg]:bg-background absolute -right-36 bottom-16 size-8 [&>svg]:size-4 [&>svg]:rounded-full"
+				side="top"
+			>
+				<CircleXIcon />
+			</TooltipIconButton>
 		</AttachmentPrimitive.Remove>
 	);
 };
@@ -195,11 +196,12 @@ export const ComposerAttachments: FC = () => {
 export const ComposerAddAttachment: FC = () => {
 	return (
 		<ComposerPrimitive.AddAttachment asChild>
-			<MuiTooltip title="Thêm đính kèm">
-				<IconButton className="my-2.5 self-center size-8 p-2 transition-opacity ease-in">
-					<PaperclipIcon />
-				</IconButton>
-			</MuiTooltip>
+			<TooltipIconButton
+				className="self-center my-2.5 size-8 p-2 transition-opacity ease-in"
+				tooltip="Thêm đính kèm"
+			>
+				<PaperclipIcon />
+			</TooltipIconButton>
 		</ComposerPrimitive.AddAttachment>
 	);
 };

@@ -26,7 +26,6 @@ import {
 	ComposerAddAttachment,
 	UserMessageAttachments,
 } from './attachment';
-import { IconButton, Tooltip } from '@mui/material';
 
 export const Thread: FC = () => {
 	return (
@@ -64,8 +63,7 @@ const ThreadScrollToBottom: FC = () => {
 	return (
 		<ThreadPrimitive.ScrollToBottom asChild>
 			<TooltipIconButton
-				tooltip="Scroll to bottom"
-				variant="outline"
+				tooltip="Cuộn xuống dưới"
 				className="absolute -top-8 rounded-full disabled:invisible"
 			>
 				<ArrowDownIcon />
@@ -138,20 +136,22 @@ const ComposerAction: FC = () => {
 		<>
 			<ThreadPrimitive.If running={false}>
 				<ComposerPrimitive.Send asChild>
-					<Tooltip title="Gửi">
-						<IconButton className="my-2.5 self-center size-8 p-2 transition-opacity ease-in">
-							<SendHorizontalIcon />
-						</IconButton>
-					</Tooltip>
+					<TooltipIconButton
+						tooltip="Gửi"
+						className="my-2.5 self-center cursor-pointer size-8 p-2 transition-opacity ease-in"
+					>
+						<SendHorizontalIcon />
+					</TooltipIconButton>
 				</ComposerPrimitive.Send>
 			</ThreadPrimitive.If>
 			<ThreadPrimitive.If running>
 				<ComposerPrimitive.Cancel asChild>
-					<Tooltip title="Hủy bỏ">
-						<IconButton className="my-2.5 self-center size-8 p-2 transition-opacity ease-in">
-							<CircleStopIcon />
-						</IconButton>
-					</Tooltip>
+					<TooltipIconButton
+						tooltip="Hủy bỏ"
+						className="my-2.5 self-center cursor-pointer size-8 p-2 transition-opacity ease-in"
+					>
+						<CircleStopIcon />
+					</TooltipIconButton>
 				</ComposerPrimitive.Cancel>
 			</ThreadPrimitive.If>
 		</>
@@ -241,16 +241,14 @@ const AssistantActionBar: FC = () => {
 			className="text-muted-foreground flex gap-1 col-start-3 row-start-2 -ml-1 data-[floating]:bg-background data-[floating]:absolute data-[floating]:rounded-md data-[floating]:border data-[floating]:p-1 data-[floating]:shadow-sm"
 		>
 			<ActionBarPrimitive.Copy asChild>
-				<Tooltip title="Sao chép">
-					<IconButton className="size-8">
-						<MessagePrimitive.If copied>
-							<CheckIcon />
-						</MessagePrimitive.If>
-						<MessagePrimitive.If copied={false}>
-							<CopyIcon />
-						</MessagePrimitive.If>
-					</IconButton>
-				</Tooltip>
+				<TooltipIconButton tooltip="Sao chép" className="size-8">
+					<MessagePrimitive.If copied>
+						<CheckIcon />
+					</MessagePrimitive.If>
+					<MessagePrimitive.If copied={false}>
+						<CopyIcon />
+					</MessagePrimitive.If>
+				</TooltipIconButton>
 			</ActionBarPrimitive.Copy>
 			{/* <ActionBarPrimitive.Reload asChild>
 				<TooltipIconButton tooltip="Refresh">
@@ -275,21 +273,17 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
 			{...rest}
 		>
 			<BranchPickerPrimitive.Previous asChild>
-				<Tooltip title="Trước đó">
-					<IconButton className="size-8">
-						<ChevronLeftIcon />
-					</IconButton>
-				</Tooltip>
+				<TooltipIconButton tooltip="Trước" className="size-8">
+					<ChevronLeftIcon />
+				</TooltipIconButton>
 			</BranchPickerPrimitive.Previous>
 			<span className="font-medium">
 				<BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
 			</span>
 			<BranchPickerPrimitive.Next asChild>
-				<Tooltip title="Tiếp theo">
-					<IconButton className="size-8">
-						<ChevronRightIcon />
-					</IconButton>
-				</Tooltip>
+				<TooltipIconButton tooltip="Sau" className="size-8">
+					<ChevronRightIcon />
+				</TooltipIconButton>
 			</BranchPickerPrimitive.Next>
 		</BranchPickerPrimitive.Root>
 	);

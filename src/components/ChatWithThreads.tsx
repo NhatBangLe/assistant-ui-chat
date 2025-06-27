@@ -8,7 +8,6 @@ import {
 	AssistantRuntimeProvider,
 	ExternalStoreThreadData,
 	ExternalStoreThreadListAdapter,
-	useExternalMessageConverter,
 } from '@assistant-ui/react';
 import { ImageAttachmentAdapter } from '@/lib/adapters/image';
 import { createNewThread, streamChat } from '@/api';
@@ -104,8 +103,8 @@ export default function ChatWithThreads() {
 		// Add user message
 		const userMessage: ThreadMessageLike = {
 			id: generateId(),
+			...message,
 			role: 'user',
-			content: message.content,
 		};
 		currMsgs = [...currMsgs, userMessage];
 		setThreads((prev) => new Map(prev).set(threadId, currMsgs));
@@ -144,26 +143,9 @@ export default function ChatWithThreads() {
 		setIsRunning(false);
 	};
 
-	const convertedMessages = useExternalMessageConverter({
-		callback: (message: ThreadMessageLike): ThreadMessageLike => ({
-			// role: message.role,
-			// content: [
-			// 	{
-			// 		type: 'text',
-			// 		text: (message.content[0] as TextContentPart).text,
-			// 	} as TextContentPart,
-			// ],
-			// id: message.id,
-			...message,
-			createdAt: new Date(),
-		}),
-		messages: currentMessages,
-		isRunning,
-		joinStrategy: 'concat-content', // Merge adjacent assistant messages
-	});
-
 	const runtime = useExternalStoreRuntime({
-		messages: convertedMessages,
+		messages: currentMessages,
+		convertMessage: (msg) => msg,
 		setMessages: (messages) => {
 			setThreads((prev) => new Map(prev).set(currentThreadId, messages));
 		},

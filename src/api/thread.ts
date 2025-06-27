@@ -16,7 +16,10 @@ const convertMessage = (message: AppendMessage): ThreadMessageRequest => {
 		attachments: message.attachments?.map((attachment) => ({
 			id: attachment.id,
 		})),
-		content: (message.content[0] as TextContentPart).text,
+		content:
+			message.content?.length !== 0
+				? (message.content[0] as TextContentPart).text
+				: '',
 	};
 };
 
