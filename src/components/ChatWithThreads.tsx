@@ -6,7 +6,6 @@ import {
 	ThreadMessageLike,
 	AppendMessage,
 	AssistantRuntimeProvider,
-	TextContentPart,
 	ExternalStoreThreadData,
 	ExternalStoreThreadListAdapter,
 	useExternalMessageConverter,
@@ -126,22 +125,19 @@ export default function ChatWithThreads() {
 		// Stream response
 		const stream = streamChat(threadId, message);
 		for await (const chunk of stream) {
-			console.log('Received chunk:', chunk);
-			console.log('Current messages:', currMsgs);
-
-			currMsgs = currMsgs.map((m) => {
-				if (m.id !== assistantMsgId) return m;
-				return {
-					...m,
-					content: [
-						...(m.content as TextContentPart[]),
-						{
-							type: 'text',
-							text: chunk,
-						},
-					],
-				};
-			});
+			currMsgs = currMsgs.map((m) =>
+				m.id === assistantMsgId
+					? {
+							...m,
+							content: [
+								{
+									type: 'text',
+									text: chunk,
+								},
+							],
+					  }
+					: m
+			);
 			setThreads((prev) => new Map(prev).set(threadId, currMsgs));
 		}
 
