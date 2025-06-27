@@ -2,7 +2,6 @@
 
 import {
 	ActionBarPrimitive,
-	BranchPickerPrimitive,
 	ComposerPrimitive,
 	ErrorPrimitive,
 	MessagePrimitive,
@@ -12,12 +11,9 @@ import type { FC } from 'react';
 import {
 	ArrowDownIcon,
 	CheckIcon,
-	ChevronLeftIcon,
-	ChevronRightIcon,
 	CopyIcon,
 	SendHorizontalIcon,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 import { MarkdownText } from '@/components/markdown-text';
 import { TooltipIconButton } from '@/components/tooltip-icon-button';
@@ -163,9 +159,8 @@ const UserMessage: FC = () => {
 		<MessagePrimitive.Root className="grid auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-2 [&:where(>*)]:col-start-2 w-full max-w-[var(--thread-max-width)] py-4">
 			{/* <UserActionBar /> */}
 
-			<UserMessageAttachments />
-
 			<div className="bg-muted text-foreground max-w-[calc(var(--thread-max-width)*0.8)] break-words rounded-3xl px-5 py-2.5 col-start-2 row-start-2">
+				<UserMessageAttachments />
 				<MessagePrimitive.Content />
 			</div>
 
@@ -217,7 +212,7 @@ const AssistantMessage: FC = () => {
 
 			<AssistantActionBar />
 
-			<BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" />
+			{/* <BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" /> */}
 		</MessagePrimitive.Root>
 	);
 };
@@ -259,35 +254,35 @@ const AssistantActionBar: FC = () => {
 	);
 };
 
-const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
-	className,
-	...rest
-}) => {
-	return (
-		<BranchPickerPrimitive.Root
-			hideWhenSingleBranch
-			className={cn(
-				'text-muted-foreground inline-flex items-center text-xs',
-				className
-			)}
-			{...rest}
-		>
-			<BranchPickerPrimitive.Previous asChild>
-				<TooltipIconButton tooltip="Trước" className="size-8">
-					<ChevronLeftIcon />
-				</TooltipIconButton>
-			</BranchPickerPrimitive.Previous>
-			<span className="font-medium">
-				<BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
-			</span>
-			<BranchPickerPrimitive.Next asChild>
-				<TooltipIconButton tooltip="Sau" className="size-8">
-					<ChevronRightIcon />
-				</TooltipIconButton>
-			</BranchPickerPrimitive.Next>
-		</BranchPickerPrimitive.Root>
-	);
-};
+// const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
+// 	className,
+// 	...rest
+// }) => {
+// 	return (
+// 		<BranchPickerPrimitive.Root
+// 			hideWhenSingleBranch
+// 			className={cn(
+// 				'text-muted-foreground inline-flex items-center text-xs',
+// 				className
+// 			)}
+// 			{...rest}
+// 		>
+// 			<BranchPickerPrimitive.Previous asChild>
+// 				<TooltipIconButton tooltip="Trước" className="size-8">
+// 					<ChevronLeftIcon />
+// 				</TooltipIconButton>
+// 			</BranchPickerPrimitive.Previous>
+// 			<span className="font-medium">
+// 				<BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
+// 			</span>
+// 			<BranchPickerPrimitive.Next asChild>
+// 				<TooltipIconButton tooltip="Sau" className="size-8">
+// 					<ChevronRightIcon />
+// 				</TooltipIconButton>
+// 			</BranchPickerPrimitive.Next>
+// 		</BranchPickerPrimitive.Root>
+// 	);
+// };
 
 const CircleStopIcon = () => {
 	return (
