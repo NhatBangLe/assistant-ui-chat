@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
 	useExternalStoreRuntime,
 	ThreadMessageLike,
@@ -9,44 +9,33 @@ import {
 	TextContentPart,
 	ExternalStoreThreadData,
 	ExternalStoreThreadListAdapter,
+	useExternalMessageConverter,
 } from '@assistant-ui/react';
 import { ImageAttachmentAdapter } from '@/lib/adapters/image';
 import { createNewThread, streamChat } from '@/api';
 import { generateId } from '@/lib/utils';
-import { useThreadContext } from './ThreadProvider';
+import { useThreadContext } from '../contexts/ThreadProvider';
+import { Thread } from '@/components/thread';
+import { ThreadList } from '@/components/thread-list';
 
-// const convertMessage = (message: ThreadMessageResponse): ThreadMessageLike => ({
-// 	id: message.id,
-// 	role: message.role,
-// 	content: [{ type: 'text', text: message.content }],
-// 	createdAt: new Date(),
-// });
-
-const convertMessage = (message: ThreadMessageLike): ThreadMessageLike =>
-	message;
-
-export function AgentRuntimeProvider({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+export default function ChatWithThreads() {
 	const { currentThreadId, setCurrentThreadId, threads, setThreads } =
 		useThreadContext();
 	const [threadList, setThreadList] = useState<
 		ExternalStoreThreadData<'regular' | 'archived'>[]
-	>([{ threadId: 'default', status: 'regular', title: 'New Chat' }]);
+	>([]);
 
 	// Get messages for current thread
-	const currentMessages = threads.get(currentThreadId) || [];
+	const currentMessages = useMemo(
+		() => threads.get(currentThreadId) ?? [],
+		[currentThreadId, threads]
+	);
 
 	const threadListAdapter: ExternalStoreThreadListAdapter = {
 		threadId: currentThreadId,
 		threads: threadList.filter(
 			(t) => t.status === 'regular'
 		) as ExternalStoreThreadData<'regular'>[],
-		archivedThreads: threadList.filter(
-			(t) => t.status === 'archived'
-		) as ExternalStoreThreadData<'archived'>[],
 		onSwitchToNewThread: async () => {
 			const newTitle = 'New Chat';
 			const newId = await createNewThread({ title: newTitle });
@@ -94,56 +83,96 @@ export function AgentRuntimeProvider({
 	const [isRunning, setIsRunning] = useState(false);
 
 	const onNew = async (message: AppendMessage) => {
+		let threadId = currentThreadId;
+		if (currentThreadId === 'default') {
+			// Create a new thread if the current one is 'default'
+			const newTitle = 'New Chat';
+			const newId = await createNewThread({ title: newTitle });
+			setThreadList((prev) => [
+				...prev,
+				{
+					threadId: newId,
+					status: 'regular',
+					title: newTitle,
+				},
+			]);
+			setCurrentThreadId(newId);
+			threadId = newId;
+		}
+
+		let currMsgs = currentMessages;
+
 		// Add user message
 		const userMessage: ThreadMessageLike = {
 			id: generateId(),
 			role: 'user',
 			content: message.content,
 		};
-		setThreads((prev) =>
-			new Map(prev).set(currentThreadId, [...currentMessages, userMessage])
-		);
+		currMsgs = [...currMsgs, userMessage];
+		setThreads((prev) => new Map(prev).set(threadId, currMsgs));
+
+		setIsRunning(true);
 
 		// Create placeholder for assistant message
-		setIsRunning(true);
 		const assistantMsgId = generateId();
 		const assistantMessage: ThreadMessageLike = {
 			role: 'assistant',
 			content: [{ type: 'text', text: '' }],
 			id: assistantMsgId,
 		};
-		setThreads((prev) =>
-			new Map(prev).set(currentThreadId, [...currentMessages, assistantMessage])
-		);
+		currMsgs = [...currMsgs, assistantMessage];
+		setThreads((prev) => new Map(prev).set(threadId, currMsgs));
 
 		// Stream response
-		const stream = streamChat('1', message);
+		const stream = streamChat(threadId, message);
 		for await (const chunk of stream) {
-			const matchedMessages = currentMessages.map((m) =>
-				m.id === assistantMsgId
-					? {
-							...m,
-							content: [
-								{
-									type: 'text',
-									text: (m.content[0] as TextContentPart).text + chunk,
-								} as TextContentPart,
-							],
-					  }
-					: m
-			);
-			setThreads((prev) => new Map(prev).set(currentThreadId, matchedMessages));
+			console.log('Received chunk:', chunk);
+			console.log('Current messages:', currMsgs);
+
+			currMsgs = currMsgs.map((m) => {
+				if (m.id !== assistantMsgId) return m;
+				return {
+					...m,
+					content: [
+						...(m.content as TextContentPart[]),
+						{
+							type: 'text',
+							text: chunk,
+						},
+					],
+				};
+			});
+			setThreads((prev) => new Map(prev).set(threadId, currMsgs));
 		}
+
 		setIsRunning(false);
 	};
-	const runtime = useExternalStoreRuntime({
+
+	const convertedMessages = useExternalMessageConverter({
+		callback: (message: ThreadMessageLike): ThreadMessageLike => ({
+			// role: message.role,
+			// content: [
+			// 	{
+			// 		type: 'text',
+			// 		text: (message.content[0] as TextContentPart).text,
+			// 	} as TextContentPart,
+			// ],
+			// id: message.id,
+			...message,
+			createdAt: new Date(),
+		}),
 		messages: currentMessages,
+		isRunning,
+		joinStrategy: 'concat-content', // Merge adjacent assistant messages
+	});
+
+	const runtime = useExternalStoreRuntime({
+		messages: convertedMessages,
 		setMessages: (messages) => {
 			setThreads((prev) => new Map(prev).set(currentThreadId, messages));
 		},
 		isRunning,
 		onNew,
-		convertMessage,
 		adapters: {
 			attachments: new ImageAttachmentAdapter(),
 			threadList: threadListAdapter,
@@ -152,7 +181,10 @@ export function AgentRuntimeProvider({
 
 	return (
 		<AssistantRuntimeProvider runtime={runtime}>
-			{children}
+			<div className="grid h-screen grid-cols-[200px_1fr]">
+				<ThreadList />
+				<Thread />
+			</div>
 		</AssistantRuntimeProvider>
 	);
 }

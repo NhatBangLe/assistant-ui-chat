@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 
 export const ThreadList: FC = () => {
 	return (
-		<ThreadListPrimitive.Root className="flex flex-col items-stretch gap-1.5">
+		<ThreadListPrimitive.Root className="flex flex-col items-stretch gap-1.5 p-2 border-2">
 			<ThreadListNew />
 			<ThreadListItems />
 		</ThreadListPrimitive.Root>
@@ -22,11 +22,11 @@ const ThreadListNew: FC = () => {
 	return (
 		<ThreadListPrimitive.New asChild>
 			<Button
-				className="data-[active]:bg-muted hover:bg-muted flex items-center justify-start gap-1 rounded-lg px-2.5 py-2 text-start"
+				className="cursor-pointer data-[active]:bg-muted hover:bg-muted flex items-center justify-start gap-1 rounded-lg px-2.5 py-2 text-start"
 				variant="ghost"
 			>
 				<PlusIcon />
-				New Thread
+				Cuộc trò chuyện mới
 			</Button>
 		</ThreadListPrimitive.New>
 	);

@@ -22,7 +22,6 @@ import {
 	DialogPortal,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { TooltipIconButton } from '@/components/tooltip-icon-button';
 import { DialogContent as DialogPrimitiveContent } from '@radix-ui/react-dialog';
 import IconButton from '@mui/material/IconButton';
 import { Tooltip as MuiTooltip } from '@mui/material';
@@ -166,13 +165,11 @@ const AttachmentUI: FC = () => {
 const AttachmentRemove: FC = () => {
 	return (
 		<AttachmentPrimitive.Remove asChild>
-			<TooltipIconButton
-				tooltip="Remove file"
-				className="text-muted-foreground [&>svg]:bg-background absolute -right-3 -top-3 size-6 [&>svg]:size-4 [&>svg]:rounded-full"
-				side="top"
-			>
-				<CircleXIcon />
-			</TooltipIconButton>
+			<MuiTooltip title="Xóa đính kèm" placement="top">
+				<IconButton className="text-muted-foreground [&>svg]:bg-background absolute -right-3 -top-3 size-6 [&>svg]:size-4 [&>svg]:rounded-full">
+					<CircleXIcon />
+				</IconButton>
+			</MuiTooltip>
 		</AttachmentPrimitive.Remove>
 	);
 };
@@ -198,7 +195,7 @@ export const ComposerAttachments: FC = () => {
 export const ComposerAddAttachment: FC = () => {
 	return (
 		<ComposerPrimitive.AddAttachment asChild>
-			<MuiTooltip title="Add Attachment">
+			<MuiTooltip title="Thêm đính kèm">
 				<IconButton className="my-2.5 self-center size-8 p-2 transition-opacity ease-in">
 					<PaperclipIcon />
 				</IconButton>

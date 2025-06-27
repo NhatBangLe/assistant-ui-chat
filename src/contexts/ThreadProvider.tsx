@@ -1,3 +1,5 @@
+'use client';
+
 import { ThreadMessageLike } from '@assistant-ui/react';
 import { createContext, ReactNode, useContext, useState } from 'react';
 
