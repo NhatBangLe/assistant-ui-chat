@@ -10,7 +10,7 @@ declare interface CreateThreadRequest {
 }
 
 declare interface ThreadMessageRequest {
-	attachments?: Array<{ id: string }> | null;
+	attachment?: { id: string } | null;
 	content: string;
 }
 

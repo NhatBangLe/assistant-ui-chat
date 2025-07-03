@@ -13,9 +13,10 @@ export const createNewThread = async (data: CreateThreadRequest) => {
 
 const convertMessage = (message: AppendMessage): ThreadMessageRequest => {
 	return {
-		attachments: message.attachments?.map((attachment) => ({
-			id: attachment.id,
-		})),
+		attachment:
+			message.attachments && message.attachments?.length !== 0
+				? { id: message.attachments[0].id }
+				: null,
 		content:
 			message.content?.length !== 0
 				? (message.content[0] as TextContentPart).text
