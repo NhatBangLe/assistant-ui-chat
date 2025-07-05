@@ -8,6 +8,9 @@ import {
 	AssistantRuntimeProvider,
 	ExternalStoreThreadData,
 	ExternalStoreThreadListAdapter,
+	TextContentPart,
+	ToolCallContentPart,
+	ThreadAssistantContentPart,
 } from '@assistant-ui/react';
 import { ImageAttachmentAdapter } from '@/lib/adapters/image';
 import { createNewThread, streamChat } from '@/api';
@@ -15,6 +18,7 @@ import { generateId } from '@/lib/utils';
 import { useThreadContext } from '../contexts/ThreadProvider';
 import { Thread } from '@/components/thread';
 import { ThreadList } from '@/components/thread-list';
+import { AIMessageChunk, ToolMessageChunk } from '@langchain/core/messages';
 
 export default function ChatWithThreads() {
 	const { currentThreadId, setCurrentThreadId, threads, setThreads } =
@@ -111,32 +115,94 @@ export default function ChatWithThreads() {
 
 		setIsRunning(true);
 
-		// Create placeholder for assistant message
-		const assistantMsgId = generateId();
-		const assistantMessage: ThreadMessageLike = {
-			role: 'assistant',
-			content: [{ type: 'text', text: '' }],
-			id: assistantMsgId,
-		};
-		currMsgs = [...currMsgs, assistantMessage];
-		setThreads((prev) => new Map(prev).set(threadId, currMsgs));
-
 		// Stream response
+		let currAssistantMessageId: string | undefined = undefined;
 		const stream = streamChat(threadId, message);
 		for await (const chunk of stream) {
-			currMsgs = currMsgs.map((m) =>
-				m.id === assistantMsgId
-					? {
-							...m,
-							content: [
-								{
-									type: 'text',
-									text: chunk,
-								},
-							],
-					  }
-					: m
-			);
+			if (chunk instanceof AIMessageChunk) {
+				console.log('Received AIMessageChunk chunk:', chunk);
+				currAssistantMessageId = chunk.id;
+				const tool_calls = (chunk.tool_calls ?? []).map(
+					(call) =>
+						({
+							type: 'tool-call' as const,
+							toolCallId: call.id,
+							toolName: call.name,
+							args: call.args,
+						} as ToolCallContentPart)
+				);
+				const existChunk = currMsgs.find(
+					(m) => m.id === currAssistantMessageId
+				);
+
+				if (!existChunk) {
+					const assistantMessage: ThreadMessageLike = {
+						role: 'assistant',
+						content: [{ type: 'text', text: chunk.text }, ...tool_calls],
+						id: currAssistantMessageId,
+					};
+					currMsgs = [...currMsgs, assistantMessage];
+				} else
+					currMsgs = currMsgs.map((m) =>
+						m.id === currAssistantMessageId
+							? {
+									...m,
+									content: [
+										{
+											type: 'text',
+											text: (m.content[0] as TextContentPart).text + chunk.text,
+										} as TextContentPart,
+										...tool_calls,
+									],
+							  }
+							: m
+					);
+			} else if (chunk instanceof ToolMessageChunk) {
+				console.log('Received ToolMessageChunk chunk:', chunk);
+				const existChunk = currMsgs.find(
+					(m) => m.id === currAssistantMessageId
+				);
+				if (!existChunk) {
+					const toolMessage = {
+						role: 'assistant',
+						content: [
+							{
+								type: 'tool-call' as const,
+								toolCallId: chunk.tool_call_id,
+								toolName: chunk.name,
+								artifact: chunk.artifact,
+								isError: chunk.status === 'error',
+								result: chunk.content,
+							} as ToolCallContentPart,
+						],
+						id: chunk.id,
+					} as ThreadMessageLike;
+					currMsgs = [...currMsgs, toolMessage];
+				} else
+					currMsgs = currMsgs.map((m) => {
+						if (m.id === chunk.id) {
+							const newContent = (
+								m.content as ThreadAssistantContentPart[]
+							).map((part) => {
+								if (
+									part.type === 'tool-call' &&
+									part.toolCallId === chunk.tool_call_id
+								)
+									return {
+										...part,
+										result: chunk.content,
+										isError: chunk.status === 'error',
+										artifact: chunk.artifact,
+									};
+								return part;
+							});
+							return {
+								...m,
+								content: newContent,
+							};
+						} else return m;
+					});
+			} else continue;
 			setThreads((prev) => new Map(prev).set(threadId, currMsgs));
 		}
 
