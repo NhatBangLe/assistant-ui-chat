@@ -120,7 +120,6 @@ export default function ChatWithThreads() {
 		const stream = streamChat(threadId, message);
 		for await (const chunk of stream) {
 			if (chunk instanceof AIMessageChunk) {
-				console.log('Received AIMessageChunk chunk:', chunk);
 				currAssistantMessageId = chunk.id;
 				const tool_calls = (chunk.tool_calls ?? []).map(
 					(call) =>
@@ -158,7 +157,6 @@ export default function ChatWithThreads() {
 							: m
 					);
 			} else if (chunk instanceof ToolMessageChunk) {
-				console.log('Received ToolMessageChunk chunk:', chunk);
 				const existChunk = currMsgs.find(
 					(m) => m.id === currAssistantMessageId
 				);

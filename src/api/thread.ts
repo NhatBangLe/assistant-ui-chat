@@ -46,6 +46,9 @@ export async function* streamChat(
 			headers: {
 				'Content-Type': 'application/json',
 				Accept: 'text/event-stream',
+				'Cache-Control': 'no-cache',
+				Connection: 'keep-alive',
+				'X-Accel-Buffering': 'no',
 			},
 		}
 	);
@@ -53,37 +56,44 @@ export async function* streamChat(
 	if (res.body) {
 		const reader = res.body.getReader();
 		const decoder = new TextDecoder();
+		let remainingDecodedChunk = '';
 		while (true) {
 			const { value, done } = await reader.read();
 			if (done) break;
 
 			const decodedChunk = decoder.decode(value, { stream: true });
-			const parsedChunk = JSON.parse(decodedChunk);
-			const chunkType = parsedChunk.type;
-			if (chunkType === 'AIMessageChunk')
-				yield new AIMessageChunk({
-					content: parsedChunk.content,
-					additional_kwargs: parsedChunk.additional_kwargs,
-					response_metadata: parsedChunk.response_metadata,
-					id: parsedChunk.id,
-					tool_calls: parsedChunk.tool_calls,
-					invalid_tool_calls: parsedChunk.invalid_tool_calls,
-					usage_metadata: parsedChunk.usage_metadata,
-					tool_call_chunks: parsedChunk.tool_call_chunks,
-					name: undefined,
-				});
-			else if (chunkType === 'tool') {
-				yield new ToolMessageChunk({
-					id: parsedChunk.id,
-					tool_call_id: parsedChunk.tool_call_id,
-					content: parsedChunk.content,
-					name: parsedChunk.name,
-					artifact: parsedChunk.artifact,
-					status: parsedChunk.status,
-					additional_kwargs: parsedChunk.additional_kwargs,
-					response_metadata: parsedChunk.response_metadata,
-				});
-			} else yield parsedChunk;
+			try {
+				const parsedChunk = JSON.parse(remainingDecodedChunk + decodedChunk);
+				remainingDecodedChunk = '';
+				const chunkType = parsedChunk.type;
+				if (chunkType === 'AIMessageChunk')
+					yield new AIMessageChunk({
+						content: parsedChunk.content,
+						additional_kwargs: parsedChunk.additional_kwargs,
+						response_metadata: parsedChunk.response_metadata,
+						id: parsedChunk.id,
+						tool_calls: parsedChunk.tool_calls,
+						invalid_tool_calls: parsedChunk.invalid_tool_calls,
+						usage_metadata: parsedChunk.usage_metadata,
+						tool_call_chunks: parsedChunk.tool_call_chunks,
+						name: undefined,
+					});
+				else if (chunkType === 'tool') {
+					yield new ToolMessageChunk({
+						id: parsedChunk.id,
+						tool_call_id: parsedChunk.tool_call_id,
+						content: parsedChunk.content,
+						name: parsedChunk.name,
+						artifact: parsedChunk.artifact,
+						status: parsedChunk.status,
+						additional_kwargs: parsedChunk.additional_kwargs,
+						response_metadata: parsedChunk.response_metadata,
+					});
+				} else yield parsedChunk;
+			} catch (error) {
+				console.warn('Unterminated chunk: ', error);
+				remainingDecodedChunk += decodedChunk;
+			}
 		}
 	}
 }
