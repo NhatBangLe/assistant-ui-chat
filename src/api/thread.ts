@@ -12,7 +12,7 @@ import {
  */
 export const createNewThread = async (data: CreateThreadRequest) => {
 	const userId = process.env.NEXT_PUBLIC_USER_ID;
-	const response = await threadInstance.post<string>(`/${userId}`, data);
+	const response = await threadInstance.post<string>(`/${userId}/create`, data);
 	return response.data;
 };
 
