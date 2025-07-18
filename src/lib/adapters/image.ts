@@ -24,15 +24,13 @@ class ImageAttachmentAdapter implements AttachmentAdapter {
 					type: 'incomplete',
 					reason: 'error',
 				},
-			};
+			} as PendingAttachment;
 		}
 
 		const imageId = await postImage(file);
 		const url = getShowingImageUrl(imageId);
-
 		return {
 			id: imageId,
-			file: file,
 			type: 'image',
 			contentType: file.type,
 			content: [
@@ -53,7 +51,7 @@ class ImageAttachmentAdapter implements AttachmentAdapter {
 			id: attachment.id,
 			type: attachment.type,
 			name: attachment.name,
-			contentType: attachment.file.type,
+			contentType: attachment.contentType,
 			content: [
 				{
 					type: 'image',
