@@ -28,12 +28,19 @@ class ImageAttachmentAdapter implements AttachmentAdapter {
 		}
 
 		const imageId = await postImage(file);
+		const url = getShowingImageUrl(imageId);
 
 		return {
 			id: imageId,
 			file: file,
 			type: 'image',
 			contentType: file.type,
+			content: [
+				{
+					type: 'image',
+					image: url,
+				},
+			],
 			name: file.name,
 			status: {
 				type: 'running',
