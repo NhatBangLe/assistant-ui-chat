@@ -1,6 +1,6 @@
 'use client';
 
-import { PropsWithChildren, useEffect, useState, type FC } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { CircleXIcon, FileIcon, PaperclipIcon } from 'lucide-react';
 import {
 	AttachmentPrimitive,
@@ -14,16 +14,10 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-	Dialog,
-	DialogTitle,
-	DialogTrigger,
-	DialogOverlay,
-	DialogPortal,
-} from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TooltipIconButton } from '@/components/tooltip-icon-button';
-import { DialogContent as DialogPrimitiveContent } from '@radix-ui/react-dialog';
+import Image from 'next/image';
+import { Backdrop, Box, Button } from '@mui/material';
 
 const useFileSrc = (file: File | undefined) => {
 	const [src, setSrc] = useState<string | undefined>(undefined);
@@ -59,51 +53,31 @@ const useAttachmentSrc = () => {
 	return useFileSrc(file) ?? src;
 };
 
-type AttachmentPreviewProps = {
-	src: string;
-};
-
-const AttachmentPreview: FC<AttachmentPreviewProps> = ({ src }) => {
+const ImagePreviewDialog = ({
+	...props
+}: React.ComponentProps<typeof Backdrop>) => {
+	const src = useAttachmentSrc();
 	const [isLoaded, setIsLoaded] = useState(false);
 
+	if (!src) return <></>;
 	return (
-		// eslint-disable-next-line @next/next/no-img-element
-		<img
-			src={src}
-			style={{
-				width: 'auto',
-				height: 'auto',
-				maxWidth: '75dvh',
-				maxHeight: '75dvh',
-				display: isLoaded ? 'block' : 'none',
-				overflow: 'clip',
-			}}
-			onLoad={() => setIsLoaded(true)}
-			alt="Preview"
-		/>
-	);
-};
-
-const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
-	const src = useAttachmentSrc();
-
-	if (!src) return children;
-
-	return (
-		<Dialog>
-			<DialogTrigger
-				className="hover:bg-accent/50 cursor-pointer transition-colors"
-				asChild
-			>
-				{children}
-			</DialogTrigger>
-			<AttachmentDialogContent>
-				<DialogTitle className="aui-sr-only">
-					Xem trước đính kèm ảnh
-				</DialogTitle>
-				<AttachmentPreview src={src} />
-			</AttachmentDialogContent>
-		</Dialog>
+		<Backdrop sx={{ zIndex: 10000 }} {...props}>
+			<Image
+				src={src}
+				fill
+				objectFit="contain"
+				style={{
+					display: isLoaded ? 'block' : 'none',
+					overflow: 'clip',
+					maxWidth: '100dvh',
+					maxHeight: '100dvh',
+					margin: 'auto',
+				}}
+				onLoad={() => setIsLoaded(true)}
+				alt="Preview"
+				loading="eager"
+			/>
+		</Backdrop>
 	);
 };
 
@@ -136,42 +110,58 @@ const AttachmentUI: FC = () => {
 				throw new Error(`Unknown attachment type: ${_exhaustiveCheck}`);
 		}
 	});
+
+	const [openImagePreview, setOpenImagePreview] = useState(false);
+
 	return (
 		<Tooltip>
-			<AttachmentPrimitive.Root className="relative mt-4">
-				<AttachmentPreviewDialog>
-					<TooltipTrigger asChild>
-						<div className="flex h-12 w-40 items-center justify-center gap-2 rounded-lg border p-1">
-							<AttachmentThumb />
-							<div className="flex-grow basis-0">
-								<p className="text-muted-foreground line-clamp-1 text-ellipsis break-all text-xs font-bold">
-									<AttachmentPrimitive.Name />
-								</p>
-								<p className="text-muted-foreground text-xs">{typeLabel}</p>
+			<AttachmentPrimitive.Root>
+				<Box position={'relative'}>
+					<Button
+						className="hover:bg-accent/50 cursor-pointer transition-colors"
+						onClick={() => {
+							if (typeLabel === 'Image') setOpenImagePreview(true);
+						}}
+					>
+						<TooltipTrigger asChild>
+							<div className="flex h-12 w-40 items-center justify-center gap-2 rounded-lg border p-1">
+								<AttachmentThumb />
+								<div className="flex-grow basis-0">
+									<p className="text-muted-foreground line-clamp-1 text-ellipsis break-all text-xs font-bold">
+										<AttachmentPrimitive.Name />
+									</p>
+									<p className="text-muted-foreground text-xs">{typeLabel}</p>
+								</div>
 							</div>
-						</div>
-					</TooltipTrigger>
-				</AttachmentPreviewDialog>
-				{canRemove && <AttachmentRemove />}
+						</TooltipTrigger>
+					</Button>
+					{canRemove && (
+						<AttachmentPrimitive.Remove asChild>
+							<Box position={'absolute'} top={-5} right={-5}>
+								<TooltipIconButton
+									tooltip="Xóa tập tin"
+									className="text-muted-foreground [&>svg]:bg-background absolute size-8 [&>svg]:size-4 [&>svg]:rounded-full"
+									side="top"
+								>
+									<CircleXIcon />
+								</TooltipIconButton>
+							</Box>
+						</AttachmentPrimitive.Remove>
+					)}
+				</Box>
+
+				{typeLabel === 'Image' && (
+					<ImagePreviewDialog
+						open={openImagePreview}
+						onClick={() => setOpenImagePreview(false)}
+						onKeyDown={() => setOpenImagePreview(false)}
+					/>
+				)}
 			</AttachmentPrimitive.Root>
 			<TooltipContent side="top">
 				<AttachmentPrimitive.Name />
 			</TooltipContent>
 		</Tooltip>
-	);
-};
-
-const AttachmentRemove: FC = () => {
-	return (
-		<AttachmentPrimitive.Remove asChild>
-			<TooltipIconButton
-				tooltip="Xóa tập tin"
-				className="text-muted-foreground [&>svg]:bg-background absolute -right-36 bottom-16 size-8 [&>svg]:size-4 [&>svg]:rounded-full"
-				side="top"
-			>
-				<CircleXIcon />
-			</TooltipIconButton>
-		</AttachmentPrimitive.Remove>
 	);
 };
 
@@ -205,12 +195,3 @@ export const ComposerAddAttachment: FC = () => {
 		</ComposerPrimitive.AddAttachment>
 	);
 };
-
-const AttachmentDialogContent: FC<PropsWithChildren> = ({ children }) => (
-	<DialogPortal>
-		<DialogOverlay />
-		<DialogPrimitiveContent className="aui-dialog-content">
-			{children}
-		</DialogPrimitiveContent>
-	</DialogPortal>
-);
