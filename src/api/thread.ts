@@ -18,9 +18,9 @@ export const createNewThread = async (data: CreateThreadRequest) => {
 
 const convertMessage = (message: AppendMessage): ThreadMessageRequest => {
 	return {
-		attachment:
+		attachment_id:
 			message.attachments && message.attachments?.length !== 0
-				? { id: message.attachments[0].id }
+				? message.attachments[0].id
 				: null,
 		content:
 			message.content?.length !== 0
@@ -121,3 +121,44 @@ export async function* streamChat(
 		}
 	}
 }
+
+export const getAttachmentMetadata = async (attachmentId: string) => {
+	const response = await threadInstance.get<AttachmentMetadataResponse>(
+		`/attachment/${attachmentId}/metadata`
+	);
+	const data = response.data;
+	return {
+		id: data.id,
+		name: data.name,
+		mimeType: data.mime_type,
+		path: data.path,
+	} as AttachmentMetadata;
+};
+
+/**
+ *
+ * @param file File to upload
+ * @returns Uploaded image ID
+ */
+export const postAttachment = async (
+	threadId: string,
+	file: File,
+	onUploadProgress?: (progress: number) => void
+) => {
+	const formData = new FormData();
+	formData.append('file', file);
+	const response = await threadInstance.postForm<string>(
+		`/attachment/${threadId}/upload`,
+		formData,
+		{
+			onUploadProgress: (progressEvent) => {
+				onUploadProgress?.(progressEvent.progress!);
+			},
+		}
+	);
+	return response.data;
+};
+
+export const deleteAttachment = async (attachmentId: string) => {
+	await threadInstance.delete<void>(`/attachment/${attachmentId}`);
+};

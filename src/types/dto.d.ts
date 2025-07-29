@@ -10,7 +10,7 @@ declare interface CreateThreadRequest {
 }
 
 declare interface ThreadMessageRequest {
-	attachment?: { id: string } | null;
+	attachment_id: string | null;
 	content: string;
 }
 
@@ -18,4 +18,11 @@ declare interface ThreadMessageResponse {
 	id: string;
 	role: 'user' | 'assistant';
 	content: string;
+}
+
+declare interface AttachmentMetadataResponse {
+	id: string;
+	name: string;
+	mime_type: string | null;
+	path: string;
 }
