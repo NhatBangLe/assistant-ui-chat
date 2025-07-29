@@ -273,7 +273,7 @@ export default function ChatWithThreads() {
 						content: [
 							{
 								type: 'image',
-								image: metadata.path.replace('http', 'https'),
+								image: metadata.path,
 							} as ImageContentPart,
 						],
 						name: metadata.name,
