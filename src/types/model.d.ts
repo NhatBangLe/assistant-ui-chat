@@ -9,5 +9,5 @@ declare interface AttachmentMetadata {
 	id: string;
 	name: string;
 	mimeType: string | null;
-	path: string;
+	url: string;
 }

@@ -10,11 +10,14 @@ import {
 	postAttachment,
 	getAttachmentMetadata,
 	deleteAttachment,
+	getAttachmentURL,
 } from './thread';
+
 export {
 	streamChat,
 	createNewThread,
 	postAttachment as uploadAttachment,
 	getAttachmentMetadata,
 	deleteAttachment,
+	getAttachmentURL,
 };

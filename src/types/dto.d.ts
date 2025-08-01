@@ -24,5 +24,5 @@ declare interface AttachmentMetadataResponse {
 	id: string;
 	name: string;
 	mime_type: string | null;
-	path: string;
+	url: string;
 }

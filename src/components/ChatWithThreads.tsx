@@ -19,7 +19,7 @@ import {
 import {
 	createNewThread,
 	deleteAttachment,
-	getAttachmentMetadata,
+	getAttachmentURL,
 	streamChat,
 	uploadAttachment,
 } from '@/api';
@@ -264,19 +264,19 @@ export default function ChatWithThreads() {
 					}
 
 					const attachmentId = await uploadAttachment(currentThreadId, file);
-					const metadata = await getAttachmentMetadata(attachmentId);
+					const attachmentURL = getAttachmentURL(attachmentId);
 
 					return {
 						id: attachmentId,
 						type: 'image',
-						contentType: metadata.mimeType,
+						contentType: file.type,
 						content: [
 							{
 								type: 'image',
-								image: metadata.path,
+								image: attachmentURL,
 							} as ImageContentPart,
 						],
-						name: metadata.name,
+						name: file.name,
 						status: {
 							type: 'running',
 						},

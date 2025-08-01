@@ -131,8 +131,12 @@ export const getAttachmentMetadata = async (attachmentId: string) => {
 		id: data.id,
 		name: data.name,
 		mimeType: data.mime_type,
-		path: data.path,
+		url: data.url,
 	} as AttachmentMetadata;
+};
+
+export const getAttachmentURL = (attachmentId: string) => {
+	return `${threadInstance.defaults.baseURL}/attachment/${attachmentId}`;
 };
 
 /**
