@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	useExternalStoreRuntime,
 	ThreadMessageLike,
@@ -11,9 +11,18 @@ import {
 	TextContentPart,
 	ToolCallContentPart,
 	ThreadAssistantContentPart,
+	Attachment,
+	CompleteAttachment,
+	PendingAttachment,
+	ImageContentPart,
 } from '@assistant-ui/react';
-import { ImageAttachmentAdapter } from '@/lib/adapters/image';
-import { createNewThread, streamChat } from '@/api';
+import {
+	createNewThread,
+	deleteAttachment,
+	getAttachmentURL,
+	streamChat,
+	uploadAttachment,
+} from '@/api';
 import { generateId } from '@/lib/utils';
 import { useThreadContext } from '../contexts/ThreadProvider';
 import { Thread } from '@/components/thread';
@@ -26,6 +35,25 @@ export default function ChatWithThreads() {
 	const [threadList, setThreadList] = useState<
 		ExternalStoreThreadData<'regular' | 'archived'>[]
 	>([]);
+
+	useEffect(() => {
+		async function createThread() {
+			// Create a new thread if the current one is 'default'
+			const newTitle = 'New Chat';
+			const newId = await createNewThread({ title: newTitle });
+			setThreadList((prev) => [
+				...prev,
+				{
+					threadId: newId,
+					status: 'regular',
+					title: newTitle,
+				},
+			]);
+			setCurrentThreadId(newId);
+		}
+
+		if (currentThreadId === 'default') createThread();
+	}, [currentThreadId, setCurrentThreadId]);
 
 	// Get messages for current thread
 	const currentMessages = useMemo(
@@ -216,7 +244,54 @@ export default function ChatWithThreads() {
 		isRunning,
 		onNew,
 		adapters: {
-			attachments: new ImageAttachmentAdapter(),
+			attachments: {
+				accept: 'image/*',
+				add: async function ({ file }): Promise<PendingAttachment> {
+					const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+					// Validate file size
+					if (file.size > maxSizeBytes) {
+						return {
+							id: generateId(),
+							type: 'image',
+							contentType: file.type,
+							name: file.name,
+							file,
+							status: {
+								type: 'incomplete',
+								reason: 'error',
+							},
+						} as PendingAttachment;
+					}
+
+					const attachmentId = await uploadAttachment(currentThreadId, file);
+					const attachmentURL = getAttachmentURL(attachmentId);
+
+					return {
+						id: attachmentId,
+						type: 'image',
+						contentType: file.type,
+						content: [
+							{
+								type: 'image',
+								image: attachmentURL,
+							} as ImageContentPart,
+						],
+						name: file.name,
+						status: {
+							type: 'running',
+						},
+					} as PendingAttachment;
+				},
+				send: async function (attachment): Promise<CompleteAttachment> {
+					return {
+						...attachment,
+						status: { type: 'complete' },
+					} as CompleteAttachment;
+				},
+				remove: async function (attachment: Attachment): Promise<void> {
+					await deleteAttachment(attachment.id);
+				},
+			},
 			threadList: threadListAdapter,
 		},
 	});
